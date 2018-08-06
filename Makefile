@@ -10,8 +10,9 @@
 # It's still possible to build, tag and push images manually. Just use:
 #	make release-all
 
-IMAGE_NAME := fluent/fluentd-kubernetes
+IMAGE_NAME := omoser/fluentd-kubernetes
 ALL_IMAGES := \
+	v1.2/debian-elasticsearch:v1.2.2-debian-elasticsearch-p5,v1.2-debian-elasticsearch-p5 \
 	v0.12/alpine-elasticsearch:v0.12.43-elasticsearch,v0.12-elasticsearch,stable-elasticsearch,elasticsearch \
 	v0.12/alpine-loggly:v0.12.43-loggly,v0.12-loggly,stable-loggly,loggly \
 	v0.12/alpine-logentries:v0.12.43-logentries,v0.12-logentries,stable-logentries,logentries \
@@ -36,7 +37,6 @@ ALL_IMAGES := \
 	v0.12/debian-graylog:v0.12.43-debian-graylog,v0.12-debian-graylog,debian-stable-graylog,debian-graylog \
 	v0.12/debian-logzio:v0.12.43-debian-logzio,v0.12-debian-logzio,debian-logzio \
 	v0.12/debian-kafka:v0.12.43-debian-kafka,v0.12-debian-kafka,debian-kafka \
-	v1.2/debian-elasticsearch:v1.2.2-debian-elasticsearch,v1.2-debian-elasticsearch \
 	v1.2/debian-loggly:v1.2.2-debian-loggly,v1.2-debian-loggly \
 	v1.2/debian-logentries:v1.2.2-debian-logentries,v1.2-debian-logentries \
 	v1.2/debian-cloudwatch:v1.2.2-debian-cloudwatch,v1.2-debian-cloudwatch \
