@@ -29,9 +29,7 @@ module Fluent::Plugin
     desc 'Specify field name in the record to parse.'
     config_param :key_name, :string
     desc 'Parse only records with this kubernetes label set.'
-    config_param :kubernetes_label, :string, default: 'jsonlog'
-    desc 'Reparse records with this kubernetes label set.'
-    config_param :reparse_initiative_log, :string, default: 'initiative'
+	config_param :kubernetes_label, :string, default: 'kubernetes.labels.jsonlog'
     desc 'Keep original key-value pair in parsed result.'
     config_param :reserve_data, :bool, default: false
     desc 'Keep original event time in parsed result.'
@@ -62,12 +60,9 @@ module Fluent::Plugin
     REPLACE_CHAR = '?'.freeze
 
     def filter_with_time(tag, time, record)
-	  reparse = record['kubernetes']['labels'][@reparse_initiative_log]
-      unless (record['kubernetes']['labels'][@kubernetes_label] || reparse)
+      unless (record[@kubernetes_label])
 		  return time, record
 	  end
-
-	  #puts "Found #{@kubernetes_label} in labels: #{record['kubernetes']['labels']}"
 
       raw_value = @accessor.call(record)
       if raw_value.nil?
@@ -80,18 +75,6 @@ module Fluent::Plugin
           return FAILED_RESULT
         end
       end
-
-
-      # 2018-08-31 08:23:32.310 SEVERE ladida		
-	  if (reparse)
-		  ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
-		  severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
-		  message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
-		  record['severity'] = severity
-		  record['message'] = message
-		  return time, record
-	  end
-
       begin
         @parser.parse(raw_value) do |t, values|
           if values
