@@ -64,10 +64,10 @@ module Fluent::Plugin
     REPLACE_CHAR = '?'.freeze
 
     def filter_with_time(tag, time, record)
-	  reparse = record['kubernetes']['labels'][@reparse_initiative_log]
-	  fluentd_format = record['kubernetes']['labels'][@fluentd_format]
+      reparse = record['kubernetes']['labels'][@reparse_initiative_log]
+      fluentd_format = record['kubernetes']['labels'][@fluentd_format]
       unless (record['kubernetes']['labels'][@kubernetes_label] || reparse || fluentd_format)
-		  return time, record
+          return time, record
       end
 
 
@@ -83,34 +83,34 @@ module Fluent::Plugin
         end
       end
 
-	  # handle custom logs
-	  if (fluentd_format)
-		  case fluentd_format
-		  when 'traefik'
-			  # time="2018-09-20T09:30:12Z" level=debug msg="vulcand/oxy/forward/websocket: completed ServeHttp on request" Request="{\"Method\":\"GET\"}"
-			  # parse the "Request" field so that it's JSON
-			  #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
-			  #severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
-			  #message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
-			  #record['severity'] = severity
-			  #record['message'] = message
-			  return time, record
-		  else
-			  return time, record
-		  end
-	  end
-		  
+      # handle custom logs
+      if (fluentd_format)
+          case fluentd_format
+          when 'traefik'
+              # time="2018-09-20T09:30:12Z" level=debug msg="vulcand/oxy/forward/websocket: completed ServeHttp on request" Request="{\"Method\":\"GET\"}"
+              # parse the "Request" field so that it's JSON
+              #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
+              #severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
+              #message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
+              #record['severity'] = severity
+              #record['message'] = message
+              return time, record
+          else
+              return time, record
+          end
+      end
+          
 
 
-      # 2018-08-31 08:23:32.310 SEVERE ladida		
-	  if (reparse)
+      # 2018-08-31 08:23:32.310 SEVERE ladida       
+      if (reparse)
           #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
-		  severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
-		  message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
-		  record['severity'] = severity
-		  record['message'] = message
-		  return time, record
-	  end
+          severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
+          message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
+          record['severity'] = severity
+          record['message'] = message
+          return time, record
+      end
 
       begin
         @parser.parse(raw_value) do |t, values|
