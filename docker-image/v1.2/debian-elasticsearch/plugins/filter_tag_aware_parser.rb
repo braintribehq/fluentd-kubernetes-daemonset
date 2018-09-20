@@ -32,6 +32,8 @@ module Fluent::Plugin
     config_param :kubernetes_label, :string, default: 'jsonlog'
     desc 'Reparse records with this kubernetes label set.'
     config_param :reparse_initiative_log, :string, default: 'initiative'
+    desc 'Reparse records with this kubernetes label set. Uses format information from label'
+    config_param :fluentd_format, :string 
     desc 'Keep original key-value pair in parsed result.'
     config_param :reserve_data, :bool, default: false
     desc 'Keep original event time in parsed result.'
@@ -63,11 +65,11 @@ module Fluent::Plugin
 
     def filter_with_time(tag, time, record)
 	  reparse = record['kubernetes']['labels'][@reparse_initiative_log]
-      unless (record['kubernetes']['labels'][@kubernetes_label] || reparse)
+	  fluentd_format = record['kubernetes']['labels'][@fluentd_format]
+      unless (record['kubernetes']['labels'][@kubernetes_label] || reparse || fluentd_format)
 		  return time, record
-	  end
+      end
 
-	  #puts "Found #{@kubernetes_label} in labels: #{record['kubernetes']['labels']}"
 
       raw_value = @accessor.call(record)
       if raw_value.nil?
@@ -81,10 +83,28 @@ module Fluent::Plugin
         end
       end
 
+	  # handle custom logs
+	  if (fluentd_format)
+		  case fluentd_format
+		  when 'traefik'
+			  # time="2018-09-20T09:30:12Z" level=debug msg="vulcand/oxy/forward/websocket: completed ServeHttp on request" Request="{\"Method\":\"GET\"}"
+			  # parse the "Request" field so that it's JSON
+			  #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
+			  #severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
+			  #message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
+			  #record['severity'] = severity
+			  #record['message'] = message
+			  return time, record
+		  else
+			  return time, record
+		  end
+	  end
+		  
+
 
       # 2018-08-31 08:23:32.310 SEVERE ladida		
 	  if (reparse)
-		  ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
+          #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
 		  severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
 		  message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
 		  record['severity'] = severity
