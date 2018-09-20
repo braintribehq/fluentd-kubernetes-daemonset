@@ -33,7 +33,7 @@ module Fluent::Plugin
     desc 'Reparse records with this kubernetes label set.'
     config_param :reparse_initiative_log, :string, default: 'initiative'
     desc 'Reparse records with this kubernetes label set. Uses format information from label'
-    config_param :fluentd_format, :string 
+    config_param :fluentd_format, :string, default: 'fluentd-format'
     desc 'Keep original key-value pair in parsed result.'
     config_param :reserve_data, :bool, default: false
     desc 'Keep original event time in parsed result.'
