@@ -25,6 +25,7 @@
    reload_connections "#{ENV['FLUENT_ELASTICSEARCH_RELOAD_CONNECTIONS'] || 'true'}"
    logstash_prefix "#{ENV['FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX'] || 'logstash'}"
    logstash_format true
+   type_name fluentd
 <% if is_v1 %>
    <buffer>
      flush_thread_count 8
@@ -234,6 +235,34 @@
   discard_kafka_delivery_failed "#{ENV['FLUENT_KAFKA_DISCARD_KAFKA_DELIVERY_FAILED'] || false}"
 </match>
 
+<% when "splunkhec" %>
+<match **>
+  @type splunk_hec
+  host "#{ENV['FLUENT_SPLUNK_HEC_HOST'] || nil}"
+  port "#{ENV['FLUENT_SPLUNK_HEC_PORT'] || '8089'}"
+  token "#{ENV['FLUENT_SPLUNK_HEC_TOKEN'] || nil}"
+
+  # metadata parameter
+  default_source "#{ENV['FLUENT_SPLUNK_HEC_SOURCE'] || 'fluentd-splunkhec'}"
+  sourcetype "#{ENV['FLUENT_SPLUNK_HEC_SOURCE_TYPE'] || 'fluentd-splunkhec'}"
+
+  use_fluentd_time "#{ENV['FLUENT_SPLUNK_HEC_USE_FLUENTD_TIME'] || true}"
+
+  # ack parameter
+  use_ack "#{ENV['FLUENT_SPLUNK_HEC_USE_ACK'] || false}"
+  ack_interval "#{ENV['FLUENT_SPLUNK_HEC_ACK_INTERVAL'] || '1'}"
+  ack_retry_limit "#{ENV['FLUENT_SPLUNK_HEC_ACK_RETRY_LIMIT'] || '3'}"
+
+  # ssl parameter
+  use_ssl "#{ENV['FLUENT_SPLUNK_HEC_USE_SSL'] || true}"
+  ssl_verify "#{ENV['FLUENT_SPLUNK_HEC_SSL_VERIFY'] || true}"
+  ca_file "#{ENV['FLUENT_SPLUNK_HEC_CA_FILE'] || '/etc/ssl/certs/ca-bundle.crt'}"
+
+  # buffered output parameter
+  flush_interval "#{ENV['FLUENT_SPLUNK_HEC_FLUSH_INTERVAL'] || '10s'}"
+
+</match>
+
 <% when "syslog" %>
 <match **>
   @type kubernetes_remote_syslog
@@ -246,4 +275,29 @@
   packet_size 65535
   output_data_type ltsv
 </match>
-<% end%>
+
+<% when "kinesis" %>
+<match **>
+  @type kinesis_streams
+  @id out_kinesis_streams
+  region "#{ENV['FLUENT_KINESIS_STREAMS_REGION'] || nil}"
+  stream_name "#{ENV['FLUENT_KINESIS_STREAMS_STREAM_NAME']}"
+  include_time_key "#{ENV['FLUENT_KINESIS_STREAMS_INCLUDE_TIME_KEY'] || false}"
+<% if is_v1 %>
+  <buffer>
+    flush_interval 1
+    chunk_limit_size 1m
+    flush_thread_interval 0.1
+    flush_thread_burst_interval 0.01
+    flush_thread_count 15
+  </buffer>
+<% else %>
+  flush_interval 1
+  buffer_chunk_limit 1m
+  try_flush_interval 0.1
+  queued_chunk_flush_interval 0.01
+  num_threads 15
+<% end %>
+</match>
+
+<% end %>
