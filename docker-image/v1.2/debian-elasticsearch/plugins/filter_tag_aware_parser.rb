@@ -32,6 +32,8 @@ module Fluent::Plugin
     config_param :kubernetes_label, :string, default: 'jsonlog'
     desc 'Reparse records with this kubernetes label set.'
     config_param :reparse_initiative_log, :string, default: 'initiative'
+    desc 'Reparse records with this kubernetes label set. Uses format information from label'
+    config_param :fluentd_format, :string, default: 'fluentd-format'
     desc 'Keep original key-value pair in parsed result.'
     config_param :reserve_data, :bool, default: false
     desc 'Keep original event time in parsed result.'
@@ -56,18 +58,18 @@ module Fluent::Plugin
 
       @accessor = record_accessor_create(@key_name)
       @parser = parser_create
+      puts "ParserType: #{@parser}"
     end
 
     FAILED_RESULT = [nil, nil].freeze # reduce allocation cost
     REPLACE_CHAR = '?'.freeze
 
     def filter_with_time(tag, time, record)
-	  reparse = record['kubernetes']['labels'][@reparse_initiative_log]
-      unless (record['kubernetes']['labels'][@kubernetes_label] || reparse)
-		  return time, record
-	  end
-
-	  #puts "Found #{@kubernetes_label} in labels: #{record['kubernetes']['labels']}"
+      parse_initiative_log = record['kubernetes']['labels'][@reparse_initiative_log]
+      fluentd_format = record['kubernetes']['labels'][@fluentd_format]
+      unless record['kubernetes']['labels'][@kubernetes_label] || parse_initiative_log || fluentd_format
+        return time, record
+      end
 
       raw_value = @accessor.call(record)
       if raw_value.nil?
@@ -81,16 +83,39 @@ module Fluent::Plugin
         end
       end
 
+      # handle custom logs
+      if fluentd_format
+        case fluentd_format
+        when 'traefik'
+          # time="2018-09-20T09:30:12Z" level=debug msg="vulcand/oxy/forward/websocket: completed ServeHttp on request" Request="{\"Method\":\"GET\"}"
+          # parse the "Request" field so that it's JSON
+          ts = raw_value[/time="([^"]+)"/, 1]
+          severity = raw_value[/level=([^ ]+)/, 1]
+          message = raw_value[/msg="([^"]+)"/, 1]
+          request = raw_value[/Request="(.+)"/, 1]
+          record['severity'] = severity
+          record['message'] = message
+          record['time'] = ts
+          if request
+            raw_value = request.delete '\\'
+          else
+            return time, record
+          end
+        else
+          return time, record
+        end
+      end
 
-      # 2018-08-31 08:23:32.310 SEVERE ladida		
-	  if (reparse)
-		  ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
-		  severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
-		  message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
-		  record['severity'] = severity
-		  record['message'] = message
-		  return time, record
-	  end
+      # handle TF logs
+      # 2018-08-31 08:23:32.310 SEVERE ladida
+      if parse_initiative_log
+        #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
+        severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
+        message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
+        record['severity'] = severity
+        record['message'] = message
+        return time, record
+      end
 
       begin
         @parser.parse(raw_value) do |t, values|
@@ -101,7 +126,7 @@ module Fluent::Plugin
                   t.nil? ? time : t
                 end
             @accessor.delete(record) if @remove_key_name_field
-            r = handle_parsed(tag, record, t, values)
+            r = handle_parsed(tag, record, t, values, fluentd_format)
             return t, r
           else
             if @emit_invalid_record_to_error
@@ -139,11 +164,15 @@ module Fluent::Plugin
 
     private
 
-    def handle_parsed(tag, record, t, values)
+    def handle_parsed(tag, record, t, values, custom_hash_value_field = nil)
       if values && @inject_key_prefix
-        values = Hash[values.map { |k, v| [@inject_key_prefix + k, v] }]
+        values = Hash[values.map {|k, v| [@inject_key_prefix + k, v]}]
       end
-      r = @hash_value_field ? {@hash_value_field => values} : values
+      if !custom_hash_value_field.nil?
+        r = {custom_hash_value_field => values}
+      else
+        r = @hash_value_field ? {@hash_value_field => values} : values
+      end
       if @reserve_data
         r = r ? record.merge(r) : record
       end
