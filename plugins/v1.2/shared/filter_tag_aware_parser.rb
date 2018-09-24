@@ -67,7 +67,8 @@ module Fluent::Plugin
     def filter_with_time(tag, time, record)
       parse_initiative_log = record['kubernetes']['labels'][@reparse_initiative_log]
       fluentd_format = record['kubernetes']['labels'][@fluentd_format]
-      unless record['kubernetes']['labels'][@kubernetes_label] || parse_initiative_log || fluentd_format
+      json_log = record['kubernetes']['labels'][@kubernetes_label]
+      unless  json_log || parse_initiative_log || fluentd_format
         return time, record
       end
 
@@ -83,8 +84,13 @@ module Fluent::Plugin
         end
       end
 
+      if json_log
+        puts "fluentd_format: #{fluentd_format}"
+        puts "raw_value: #{raw_value}"
+      end
+
       # handle custom logs
-      if fluentd_format
+      if fluentd_format && !json_log
         case fluentd_format
         when 'traefik'
           # time="2018-09-20T09:30:12Z" level=debug msg="vulcand/oxy/forward/websocket: completed ServeHttp on request" Request="{\"Method\":\"GET\"}"
@@ -92,10 +98,12 @@ module Fluent::Plugin
           ts = raw_value[/time="([^"]+)"/, 1]
           severity = raw_value[/level=([^ ]+)/, 1]
           message = raw_value[/msg="([^"]+)"/, 1]
-          request = raw_value[/Request="(.+)"/, 1]
+          request = raw_value[/Request="(.+)" (ForwardURL)?/, 1]
+          forward_url = raw_value[/ForwardURL="([^"]+)"/, 1]
           record['severity'] = severity
           record['message'] = message
           record['time'] = ts
+          record['forward_url'] = forward_url
           if request
             raw_value = request.delete '\\'
           else
@@ -127,6 +135,7 @@ module Fluent::Plugin
                 end
             @accessor.delete(record) if @remove_key_name_field
             r = handle_parsed(tag, record, t, values, fluentd_format)
+            puts "Final record: #{r}"
             return t, r
           else
             if @emit_invalid_record_to_error
@@ -169,6 +178,7 @@ module Fluent::Plugin
         values = Hash[values.map {|k, v| [@inject_key_prefix + k, v]}]
       end
       if !custom_hash_value_field.nil?
+        puts "Values go to #{custom_hash_value_field}: #{values}"
         r = {custom_hash_value_field => values}
       else
         r = @hash_value_field ? {@hash_value_field => values} : values
