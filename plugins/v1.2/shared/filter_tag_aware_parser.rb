@@ -92,9 +92,11 @@ module Fluent::Plugin
           ts = raw_value[/time="([^"]+)"/, 1]
           severity = raw_value[/level=([^ ]+)/, 1]
           message = raw_value[/msg="([^"]+)"/, 1]
-          request = raw_value[/Request="(.+)"/, 1]
+          request = raw_value[/Request="(.+)" (ForwardURL)?/, 1]
+          forward_url = raw_value[/ForwardURL="([^"]+)"/, 1]
           record['severity'] = severity
           record['message'] = message
+          record['forwardUrl'] = forward_url
           record['time'] = ts
           if request
             raw_value = request.delete '\\'
