@@ -85,8 +85,8 @@ module Fluent::Plugin
       end
 
       if json_log
-        puts "fluentd_format: #{fluentd_format}"
-        puts "raw_value: #{raw_value}"
+        #puts "fluentd_format: #{fluentd_format}"
+        #puts "raw_value: #{raw_value}"
       end
 
       # handle custom logs
@@ -116,7 +116,7 @@ module Fluent::Plugin
 
       # handle TF logs
       # 2018-08-31 08:23:32.310 SEVERE ladida
-      if parse_initiative_log
+      if parse_initiative_log && !json_log
         #ts = raw_value[/(\d{4}-\d{2}-\d{2} [^\s]+)/, 1]
         severity = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ ([^\s]+)/, 1]
         message = raw_value[/\d{4}-\d{2}-\d{2} [^\s]+ [^\s]+ (.*)/, 1]
@@ -135,7 +135,7 @@ module Fluent::Plugin
                 end
             @accessor.delete(record) if @remove_key_name_field
             r = handle_parsed(tag, record, t, values, fluentd_format)
-            puts "Final record: #{r}"
+            #puts "Final record: #{r}"
             return t, r
           else
             if @emit_invalid_record_to_error

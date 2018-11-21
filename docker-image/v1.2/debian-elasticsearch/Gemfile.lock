@@ -8,7 +8,7 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.5.2)
       public_suffix (>= 2.0.2, < 4.0)
-    concurrent-ruby (1.0.5)
+    concurrent-ruby (1.1.3)
     cool.io (1.5.3)
     dig_rb (1.0.1)
     domain_name (0.5.20180417)
@@ -27,15 +27,15 @@ GEM
     ffi (1.9.25)
     fluent-config-regexp-type (1.0.0)
       fluentd (> 1.0.0, < 2)
-    fluent-plugin-elasticsearch (2.11.10)
+    fluent-plugin-elasticsearch (2.12.1)
       elasticsearch
       excon
       fluentd (>= 0.14.20)
-    fluent-plugin-kubernetes_metadata_filter (2.1.3)
+    fluent-plugin-kubernetes_metadata_filter (2.1.5)
       fluentd (>= 0.14.0, < 2)
       kubeclient (~> 1.1.4)
       lru_redux
-    fluent-plugin-rewrite-tag-filter (2.1.0)
+    fluent-plugin-rewrite-tag-filter (2.1.1)
       fluent-config-regexp-type
       fluentd (>= 0.14.2, < 2)
     fluent-plugin-systemd (1.0.1)
@@ -61,7 +61,7 @@ GEM
       domain_name (~> 0.5)
     http-form_data (1.0.3)
     http_parser.rb (0.6.0)
-    i18n (1.1.0)
+    i18n (1.1.1)
       concurrent-ruby (~> 1.0)
     kubeclient (1.1.4)
       activesupport
@@ -84,7 +84,7 @@ GEM
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 4.0)
       netrc (~> 0.8)
-    serverengine (2.0.7)
+    serverengine (2.1.0)
       sigdump (~> 0.2.2)
     sigdump (0.2.4)
     strptime (0.2.3)
@@ -93,7 +93,7 @@ GEM
     thread_safe (0.3.6)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
-    tzinfo-data (1.2018.5)
+    tzinfo-data (1.2018.7)
       tzinfo (>= 1.0.0)
     unf (0.1.4)
       unf_ext
@@ -113,4 +113,4 @@ DEPENDENCIES
   oj (= 3.5.1)
 
 BUNDLED WITH
-   1.16.3
+   1.17.1
