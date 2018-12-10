@@ -12,7 +12,7 @@
 
 IMAGE_NAME := omoser/fluentd-kubernetes
 ALL_IMAGES := \
-	v1.2/debian-elasticsearch:v1.2.2-debian-elasticsearch-p19,v1.2-debian-elasticsearch-p19 \
+	v1.2/debian-elasticsearch:v1.2.2-debian-elasticsearch-p20,v1.2-debian-elasticsearch-p20 \
 	v0.12/alpine-elasticsearch:v0.12.43-elasticsearch,v0.12-elasticsearch,stable-elasticsearch,elasticsearch \
 	v0.12/alpine-loggly:v0.12.43-loggly,v0.12-loggly,stable-loggly,loggly \
 	v0.12/alpine-logentries:v0.12.43-logentries,v0.12-logentries,stable-logentries,logentries \
