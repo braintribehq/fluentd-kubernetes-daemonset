@@ -68,6 +68,15 @@ module Fluent::Plugin
       parse_initiative_log = record['kubernetes']['labels'][@reparse_initiative_log]
       fluentd_format = record['kubernetes']['labels'][@fluentd_format]
       json_log = record['kubernetes']['labels'][@kubernetes_label]
+      fluentd_debug = record['kubernetes']['labels']['fluentd_debug']
+
+
+      if fluentd_debug
+        puts "Config | parse_initiative_log: #{parse_initiative_log}"
+        puts "Config | fluentd_format: #{fluentd_format}"
+        puts "Config | json_log: #{json_log}"
+      end
+
       unless  json_log || parse_initiative_log || fluentd_format
         return time, record
       end
@@ -174,11 +183,16 @@ module Fluent::Plugin
     private
 
     def handle_parsed(tag, record, t, values, custom_hash_value_field = nil)
+      fluentd_debug = record['kubernetes']['labels']['fluentd_debug']
+
+      if fluentd_debug
+        puts "Values go to #{custom_hash_value_field}: #{values}"
+      end
+
       if values && @inject_key_prefix
         values = Hash[values.map {|k, v| [@inject_key_prefix + k, v]}]
       end
       if !custom_hash_value_field.nil?
-        puts "Values go to #{custom_hash_value_field}: #{values}"
         r = {custom_hash_value_field => values}
       else
         r = @hash_value_field ? {@hash_value_field => values} : values
